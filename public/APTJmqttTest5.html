@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="jp">
+
+<head>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>APTJ MQTT Test</title>
+	<link rel="stylesheet" href="./stylesheets/jquery.mobile-1.4.5.min.css">
+	<link rel="stylesheet" href="./stylesheets/style.css">
+	<script src="./javascripts/jquery.js"></script>
+	<script src="./javascripts/jquery.mobile-1.4.5.min.js"></script>
+
+	<link rel="stylesheet" href="https://npmcdn.com/leaflet@1.0.0-rc.2/dist/leaflet.css" />
+
+	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+
+	<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+
+</head>
+
+<script type="text/javascript">
+
+	var socket;
+	var logCounter=0;
+
+	$(document).ready(function(){
+
+		socket = io.connect();
+
+		socket.on('connectionInitial', function(data, fn){
+			fn("browser successfully connected");
+		});
+
+		socket.on('roomLogData', function(data, fn){
+			var receivedString = data.message;
+			var value = receivedString.split("::");
+			var command = (value[0].split("/"))[3];
+			if(command == "log"){
+				var location = value[1];
+				var item = location.split(",");
+				if(item.length==5){
+					var id = item[0].split(":");
+					var time = item[1].split(":");
+					var lat = item[2].split(":");
+					var lon = item[3].split(":");
+					var alt = item[4].split(":");
+					var latVal = (lat[1])/10000000;
+					var lonVal = (lon[1])/10000000;
+					if(logCounter>100){
+						pointMap(latVal, lonVal);
+						logCounter=0;
+					}else{
+						logCounter++;
+					}
+				}
+
+			}
+			addTextMessage("Received : " + value[0] + value[1]);
+		});
+	});
+
+	function publishButtonClicked(){
+
+		var topic = document.getElementById("publishTopic").value;
+		var data = document.getElementById("publishData").value;
+		socket.emit( "mqttPublish", { value : topic + "::" + data } );
+
+	}
+
+	function publishDataClicked(tp, dt){
+		var topic = tp;
+		var data = dt;
+		socket.emit( "mqttPublish", { value : topic + "::" + data } );
+
+	}
+
+	function connect(){
+		var systemid = document.getElementById("systemid").value;
+		socket.emit( "mqttConnect", { value : systemid } );
+	}
+
+	function addTextMessage(msg){
+		log = document.getElementById("mqttLog");
+		log.value = msg + "\n" + log.value;
+	}
+
+	function takeoffClicked(){
+		var alt = document.getElementById("takeoffaltitude").value;
+		socket.emit( "mqttPublish", { value : "takeoff" + "::" + "takeoff " + alt } );
+	}
+
+</script>
+
+<body onLoad="initData()">
+
+	<div role="main" class="ui-content jqm-content">
+
+		<h1>MQTT for APTJ</h1>
+
+		<div data-demo-html="true" id="subscribe">
+			<ul data-role="listview" data-inset="true">
+				<li data-role="list-divider">Drone Position</li>
+				<li>
+					<div class="panel-body">
+						<div id='map_elemnt' style='width: 1500x; height: 500px; border: solid 1px #999;'></div>
+					</div>
+				</li>
+			</ul>
+		</div>
+
+		<div data-demo-html="true" id="systemidRegistration">
+			<ul data-role="listview" data-inset="true">
+				<li data-role="list-divider">SystemID registration</li>
+				<li>
+					<div class="form"><input type="text" name="text-basic" id="systemid" value="" placeholder="SYSTEM ID"></div>
+					<div class="button"><button class="ui-shadow ui-btn ui-corner-all" onClick="connect()">Connect</button></div>
+				</li>
+			</ul>
+		</div>
+
+		<div data-demo-html="true" id="publish">
+			<ul data-role="listview" data-inset="true">
+				<li data-role="list-divider">Preset Command</li>
+				<li>
+					<div class="ui-grid-a">
+						<div class="ui-block-a"><input type="button" value="ARM" onClick="publishDataClicked('arm', 'arm')"></div>
+						<div class="ui-block-b"><input type="button" value="DISARM" onClick="publishDataClicked('disarm', 'disarm')"></div>
+					</div>
+					
+					<div class="ui-grid-b">
+						<div class="ui-block-b"><input type="button" value="LOITER" onClick="publishDataClicked('loiter', 'mode loiter')"></div>
+						<div class="ui-block-b"><input type="button" value="STL" onClick="publishDataClicked('stabilize', 'mode stabilize')"></div>
+						<div class="ui-block-b"><input type="button" value="ALTHOLD" onClick="publishDataClicked('althold', 'mode althold')"></div>
+					</div>
+					
+					<div class="ui-grid-a">
+						<div class="ui-block-a"><input type="button" value="TAKEOFF" onClick="takeoffClicked()"></div>
+						<div class="ui-block-b"><div class="form"><input type="text" name="text-basic" id="takeoffaltitude" value="" placeholder="Altitude(m)"></div></div>
+					</div>
+					
+				</li>
+			</ul>
+		</div>
+
+		<div data-demo-html="true" id="publish">
+			<ul data-role="listview" data-inset="true">
+				<li data-role="list-divider">Send Command</li>
+				<li>
+					<div class="form"><input type="text" name="text-basic" id="publishTopic" value="" placeholder="Command"></div>
+					<div class="form"><input type="text" name="text-basic" id="publishData"  value=""  placeholder="Data"></div>
+					<div class="button"><button class="ui-shadow ui-btn ui-corner-all" onClick="publishButtonClicked()">Publish</button></div>
+				</li>
+			</ul>
+		</div>
+
+		<div data-demo-html="true" id="publish">
+			<ul data-role="listview" data-inset="true">
+				<li data-role="list-divider">LOG</li>
+				<li>
+					<textarea cols="40" rows="10" name="textarea-4" id="mqttLog"></textarea>
+				</li>
+			</ul>
+		</div>
+
+	</div>
+
+	<script type="text/javascript">
+
+		function initData(){
+
+			initMap();
+			socket.emit( "mqttConnectionRequest");
+
+		}
+
+		var map;
+		function initMap(){
+
+			map = L.map('map_elemnt');
+			map.setView([36.321444, 138.59667], 15);
+
+			// add an OpenStreetMap tile layer
+			var tileLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			    attribution : '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+			});
+			tileLayer.addTo(map);
+
+			// add a marker in the given location,
+			// attach some popup content to it and open the popup
+
+			// var mapMarker = L.marker([35.40, 139.50]);
+			// mapMarker.addTo(map);
+			// mapMarker.bindPopup('CSS3 popup. <br> Test point');
+			// mapMarker.openPopup();
+
+			var baseLayers = {
+			    "OpenStreetMap": tileLayer
+			};
+
+			L.control.scale().addTo(map);
+
+			var marker;
+			map.on('click', function(e){
+				document.getElementById("longitude").value = e.latlng.lat;
+				document.getElementById("latitude").value = e.latlng.lng;
+				if(marker!=null){
+					map.removeLayer(marker);
+				}
+				marker = L.marker(e.latlng).addTo(map);
+				map.panTo(e.latlng);
+			});
+		
+		}
+
+		function pointMap(lat, lon){
+			marker = L.marker([lat, lon]).addTo(map);
+			map.panTo([lat, lon]);
+		}
+
+	</script>
+
+	<script src="https://npmcdn.com/leaflet@1.0.0-rc.2/dist/leaflet.js"></script>
+
+</body>
+
+</html>

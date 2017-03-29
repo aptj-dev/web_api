@@ -1,0 +1,63 @@
+body {
+  font-size: 12px;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.panel {
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+  padding: 0.5rem;
+}
+
+.panel-heading {
+  margin-top: 1rem;
+  margin-bottom: 0rem;
+  padding: 0.5rem;
+  padding-left: 1rem;
+  background-color: rgba(86,61,124,.15);
+}
+
+h3.panel-title{
+  font-size: 20px;
+  color: rgb(150,150,150);
+}
+
+.panel-body {
+  margin-top: 0rem;
+}
+
+thead{
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+}
+
+h3{
+  color: rgba(60,0,0,255);
+}
+
+th{
+  font-size: 12px;
+  text-align: center;
+  color: rgba(60,60,60,255);
+  background-color: rgba(86,61,124,.15);
+}
+
+tr{
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+  font-size: 14px;
+  text-align: center;
+  color: rgb(60,60,60);
+  background-color: rgba(86,61,124,.15);
+}
+
+tr.input{
+  background-color: rgb(255,255,255);
+}
+
+input{
+  text-align: center;
+  margin-top: 0rem;
+  margin-bottom: 0rem;
+}

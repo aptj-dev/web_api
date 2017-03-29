@@ -1,0 +1,23 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+div.roomStateInUse {
+  color: #FF0000;
+  font-size: 2.0em;
+}
+
+div.roomStateFree {
+  color: #c8c8c8;
+  font-size: 2.0em;
+}
+
+div.roomValue {
+  color: #00a0e9;
+  font-size: 1.0em;
+}
